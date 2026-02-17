@@ -1,0 +1,1646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>zh0s7 — void://portfolio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --base: #1e1e2e;
+    --mantle: #181825;
+    --crust: #11111b;
+    --surface0: #313244;
+    --surface1: #45475a;
+    --surface2: #585b70;
+    --overlay0: #6c7086;
+    --overlay1: #7f849c;
+    --text: #cdd6f4;
+    --subtext0: #a6adc8;
+    --subtext1: #bac2de;
+    --lavender: #b4befe;
+    --blue: #89b4fa;
+    --sapphire: #74c7ec;
+    --sky: #89dceb;
+    --teal: #94e2d5;
+    --green: #a6e3a1;
+    --yellow: #f9e2af;
+    --peach: #fab387;
+    --maroon: #eba0ac;
+    --red: #f38ba8;
+    --mauve: #cba6f7;
+    --pink: #f5c2e7;
+    --flamingo: #f2cdcd;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--crust);
+    color: var(--text);
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* === WALLPAPER === */
+  #wallpaper {
+    position: fixed;
+    inset: 0;
+    background: 
+      radial-gradient(ellipse at 20% 50%, rgba(137,180,250,0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, rgba(203,166,247,0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 60% 80%, rgba(166,227,161,0.06) 0%, transparent 50%),
+      linear-gradient(135deg, #0a0a0f 0%, #11111b 40%, #0d0d1a 100%);
+    z-index: 0;
+  }
+
+  #wallpaper::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: 
+      repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.008) 2px, rgba(255,255,255,0.008) 4px);
+    pointer-events: none;
+  }
+
+  /* Grid dots */
+  #wallpaper::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(circle, rgba(137,180,250,0.15) 1px, transparent 1px);
+    background-size: 40px 40px;
+    opacity: 0.3;
+  }
+
+  /* === TERMINAL WINDOW === */
+  #terminal-window {
+    position: fixed;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 
+      0 0 0 1px rgba(137,180,250,0.05),
+      0 25px 60px rgba(0,0,0,0.8),
+      0 0 80px rgba(137,180,250,0.05),
+      inset 0 1px 0 rgba(255,255,255,0.05);
+    background: rgba(30, 30, 46, 0.92);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    overflow: hidden;
+  }
+
+  #terminal-window.fullscreen {
+    inset: 20px;
+    max-height: calc(100vh - 40px);
+  }
+
+  #terminal-window.minimized {
+    bottom: 20px;
+    left: 20px;
+    width: 420px;
+    height: 280px;
+    inset: unset;
+  }
+
+  /* Floating overlay — shown over the project viewer */
+  #terminal-window.overlay {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    top: unset;
+    width: min(680px, calc(100vw - 48px));
+    height: 340px;
+    transform: translateX(-50%);
+    z-index: 150;
+    display: flex;
+    flex-direction: column;
+    animation: slideUp 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateX(-50%) translateY(16px); }
+    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+  }
+
+  #terminal-window.hidden {
+    opacity: 0 !important;
+    pointer-events: none !important;
+    /* keep translateX so position stays correct when toggling back */
+    transform: translateX(-50%) translateY(8px) scale(0.97) !important;
+  }
+
+  @media (max-width: 640px) {
+    #terminal-window.overlay {
+      width: calc(100vw - 32px);
+      height: 260px;
+      bottom: 16px;
+    }
+  }
+
+  /* Show window controls in fullscreen but disable them */
+  #terminal-window.fullscreen .dot {
+    opacity: 0.3;
+    pointer-events: none;
+    cursor: default;
+  }
+  #title-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: rgba(17,17,27,0.6);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    flex-shrink: 0;
+  }
+
+  .dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .dot:hover { opacity: 0.7; }
+  .dot-red { background: #ff5f57; }
+  .dot-yellow { background: #ffbd2e; }
+  .dot-green { background: #28c840; }
+
+  #title-text {
+    margin-left: 12px;
+    font-size: 12px;
+    color: var(--overlay0);
+    font-weight: 500;
+    letter-spacing: 0.05em;
+  }
+
+  /* Terminal body */
+  #terminal-body {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 16px;
+    font-size: 13px;
+    line-height: 1.6;
+    scrollbar-width: thin;
+    scrollbar-color: var(--surface1) transparent;
+  }
+
+  #terminal-body::-webkit-scrollbar { width: 4px; }
+  #terminal-body::-webkit-scrollbar-thumb { background: var(--surface1); border-radius: 2px; }
+
+  /* Output lines */
+  .line { margin-bottom: 2px; white-space: pre-wrap; word-break: break-all; }
+  .line-success { color: var(--green); }
+  .line-error { color: var(--red); }
+  .line-warning { color: var(--yellow); }
+  .line-info { color: var(--blue); }
+  .line-muted { color: var(--overlay0); }
+  .line-mauve { color: var(--mauve); }
+  .line-peach { color: var(--peach); }
+  .line-sky { color: var(--sky); }
+  .line-teal { color: var(--teal); }
+  .line-prompt { color: var(--text); }
+
+  /* Input area */
+  #input-area {
+    display: flex;
+    align-items: center;
+    padding: 8px 16px 14px;
+    gap: 0;
+    flex-shrink: 0;
+  }
+
+  #prompt-label {
+    color: var(--mauve);
+    font-weight: 600;
+    font-size: 13px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  #prompt-label .at { color: var(--overlay1); }
+  #prompt-label .host { color: var(--blue); }
+  #prompt-label .path { color: var(--teal); }
+  #prompt-label .dollar { color: var(--green); margin-left: 4px; }
+
+  #cmd-input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    flex: 1;
+    caret-color: var(--green);
+    margin-left: 8px;
+  }
+
+  /* Blinking cursor */
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
+  .cursor {
+    display: inline-block;
+    width: 8px;
+    height: 14px;
+    background: var(--green);
+    animation: blink 1s step-end infinite;
+    vertical-align: middle;
+    margin-left: 1px;
+  }
+
+  /* === PROJECT VIEWER === */
+  #project-viewer {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: none;
+    padding: 40px;
+    overflow-y: auto;
+    background: rgba(11,11,17,0.7);
+    backdrop-filter: blur(4px);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+
+  #project-viewer.visible {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+  }
+
+  #project-viewer.faded-in {
+    opacity: 1;
+  }
+
+  #project-content {
+    max-width: 800px;
+    width: 100%;
+    padding-bottom: 160px;
+  }
+
+  .project-header {
+    margin-bottom: 32px;
+  }
+
+  .project-tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    margin-right: 8px;
+  }
+
+  .tag-red { background: rgba(243,139,168,0.15); color: var(--red); border: 1px solid rgba(243,139,168,0.3); }
+  .tag-blue { background: rgba(137,180,250,0.15); color: var(--blue); border: 1px solid rgba(137,180,250,0.3); }
+  .tag-green { background: rgba(166,227,161,0.15); color: var(--green); border: 1px solid rgba(166,227,161,0.3); }
+  .tag-mauve { background: rgba(203,166,247,0.15); color: var(--mauve); border: 1px solid rgba(203,166,247,0.3); }
+  .tag-peach { background: rgba(250,179,135,0.15); color: var(--peach); border: 1px solid rgba(250,179,135,0.3); }
+  .tag-teal { background: rgba(148,226,213,0.15); color: var(--teal); border: 1px solid rgba(148,226,213,0.3); }
+
+  .project-title {
+    font-size: 42px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.1;
+    margin-bottom: 8px;
+    letter-spacing: -0.02em;
+  }
+
+  .project-subtitle {
+    font-size: 15px;
+    color: var(--subtext0);
+    margin-bottom: 32px;
+    line-height: 1.7;
+  }
+
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, var(--surface1), transparent);
+    margin: 24px 0;
+  }
+
+  .section-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--overlay0);
+    margin-bottom: 12px;
+    font-weight: 600;
+  }
+
+  .project-desc {
+    font-size: 14px;
+    color: var(--subtext1);
+    line-height: 1.8;
+    margin-bottom: 24px;
+  }
+
+  .tech-stack {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 32px;
+  }
+
+  .tech-pill {
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    background: var(--surface0);
+    color: var(--subtext1);
+    border: 1px solid var(--surface1);
+    transition: all 0.2s;
+  }
+
+  .tech-pill:hover {
+    background: var(--surface1);
+    color: var(--text);
+    border-color: var(--overlay0);
+  }
+
+  .feature-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+
+  .feature-card {
+    background: var(--surface0);
+    border: 1px solid var(--surface1);
+    border-radius: 8px;
+    padding: 16px;
+  }
+
+  .feature-card h4 {
+    font-size: 12px;
+    color: var(--mauve);
+    margin-bottom: 6px;
+    font-weight: 600;
+  }
+
+  .feature-card p {
+    font-size: 12px;
+    color: var(--subtext0);
+    line-height: 1.6;
+  }
+
+  .code-block {
+    background: var(--mantle);
+    border: 1px solid var(--surface0);
+    border-radius: 8px;
+    padding: 16px;
+    font-size: 12px;
+    color: var(--green);
+    margin-bottom: 24px;
+    overflow-x: auto;
+  }
+
+  .stat-row {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 24px;
+  }
+
+  .stat {
+    text-align: center;
+  }
+
+  .stat-number {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--blue);
+    display: block;
+  }
+
+  .stat-label {
+    font-size: 11px;
+    color: var(--overlay0);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .exit-hint {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--overlay0);
+    margin-top: 8px;
+  }
+
+  .exit-hint kbd {
+    background: var(--surface0);
+    border: 1px solid var(--surface1);
+    padding: 2px 8px;
+    border-radius: 4px;
+    color: var(--subtext0);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+  }
+
+  /* Scan line animation */
+  @keyframes scanline {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(100vh); }
+  }
+
+  .scanline {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(transparent, rgba(166,227,161,0.06), transparent);
+    animation: scanline 8s linear infinite;
+    pointer-events: none;
+    z-index: 200;
+  }
+
+  /* Boot animation */
+  @keyframes typeIn {
+    from { opacity: 0; transform: translateX(-4px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .boot-line {
+    animation: typeIn 0.05s ease forwards;
+    opacity: 0;
+  }
+
+  /* ASCII art */
+  .ascii-art {
+    color: var(--mauve);
+    font-size: 11px;
+    line-height: 1.2;
+    white-space: pre;
+  }
+
+  .ascii-highlight { color: var(--blue); }
+
+  /* ls output */
+  .ls-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 4px;
+  }
+
+  .ls-dir { color: var(--blue); font-weight: 600; }
+  .ls-file { color: var(--text); }
+  .ls-exec { color: var(--green); }
+
+  /* Help table */
+  .help-table { width: 100%; border-collapse: collapse; }
+  .help-table td { padding: 3px 12px 3px 0; font-size: 13px; }
+  .help-table td:first-child { color: var(--green); min-width: 140px; }
+  .help-table td:last-child { color: var(--subtext0); }
+
+  /* Terminal FAB — shown in view mode on all devices */
+  #terminal-fab {
+    display: none;
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    z-index: 200;
+    align-items: center;
+    gap: 10px;
+    background: rgba(30,30,46,0.95);
+    border: 1px solid rgba(203,166,247,0.35);
+    border-radius: 40px;
+    padding: 10px 18px 10px 14px;
+    cursor: pointer;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.6), 0 0 0 1px rgba(203,166,247,0.1), 0 0 20px rgba(203,166,247,0.12);
+    backdrop-filter: blur(12px);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--mauve);
+    letter-spacing: 0.04em;
+    transition: all 0.2s ease;
+    animation: fabPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  }
+
+  @keyframes fabPop {
+    from { opacity: 0; transform: scale(0.8) translateY(8px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  #terminal-fab:hover {
+    background: rgba(40,40,60,0.98);
+    border-color: rgba(203,166,247,0.6);
+    box-shadow: 0 6px 28px rgba(0,0,0,0.7), 0 0 28px rgba(203,166,247,0.2);
+    transform: translateY(-1px);
+  }
+
+  #terminal-fab .fab-icon {
+    font-size: 14px;
+    opacity: 0.9;
+  }
+
+  #terminal-fab .fab-hint {
+    font-size: 10px;
+    color: var(--overlay0);
+    font-weight: 400;
+    margin-left: 4px;
+  }
+
+  /* Mobile FAB (legacy, kept for compat) */
+  #mobile-fab {
+    display: none;
+  }
+
+  /* Scrollbar for project viewer */
+  #project-viewer::-webkit-scrollbar { width: 4px; }
+  #project-viewer::-webkit-scrollbar-thumb { background: var(--surface1); border-radius: 2px; }
+
+  @media (max-width: 640px) {
+    #terminal-window.fullscreen {
+      inset: 0;
+      border-radius: 0;
+    }
+
+    #terminal-window.minimized {
+      width: calc(100vw - 40px);
+      height: 220px;
+      bottom: 20px;
+      left: 20px;
+      right: 20px;
+    }
+
+    #project-viewer {
+      padding: 20px;
+    }
+
+    .project-title { font-size: 28px; }
+    .feature-grid { grid-template-columns: 1fr; }
+
+    #terminal-fab {
+      bottom: 20px;
+      right: 20px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div id="wallpaper"></div>
+<div class="scanline"></div>
+
+<!-- Project Viewer -->
+<div id="project-viewer">
+  <div id="project-content"></div>
+</div>
+
+<!-- Terminal Window -->
+<div id="terminal-window" class="fullscreen">
+  <div id="title-bar">
+    <div class="dot dot-red" onclick="closeTerm()"></div>
+    <div class="dot dot-yellow" onclick="minimizeTerm()"></div>
+    <div class="dot dot-green" onclick="maximizeTerm()"></div>
+    <span id="title-text">zh0s7@void: ~</span>
+  </div>
+  <div id="terminal-body"></div>
+  <div id="input-area">
+    <span id="prompt-label">
+      <span style="color:var(--mauve);font-weight:700">zh0s7</span><span class="at" style="color:var(--overlay1)">@</span><span class="host" style="color:var(--blue)">void</span> <span class="path" id="path-display" style="color:var(--teal)">~</span><span class="dollar" style="color:var(--green)"> $</span>
+    </span>
+    <input type="text" id="cmd-input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" disabled>
+  </div>
+</div>
+
+<!-- Terminal FAB -->
+<div id="terminal-fab" onclick="toggleTerminalFab()">
+  <span class="fab-icon">&gt;_</span>
+  <span>terminal</span>
+  <span class="fab-hint">` or click</span>
+</div>
+
+<!-- Mobile FAB (legacy) -->
+<button id="mobile-fab" onclick="toggleMobileTerm()">&#62;_</button>
+
+<script>
+// ============================================================
+// DATA
+// ============================================================
+
+const UPTIME = (() => {
+  const years = new Date().getFullYear() - 2006;
+  const months = new Date().getMonth();
+  return `${years} years, ${months} months`;
+})();
+
+const ASCII_SKULL = `
+  ░▒▓███████▓▒░░▒▓█████████▓▒░░▒▓████████▓▒░░▒▓██████████████▓▒░  
+ ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░ 
+ ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░ 
+ ░▒▓███████▓▒░░▒▓█████████▓▒░▒▓███████▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░ 
+ ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░ 
+ ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░ 
+ ░▒▓███████▓▒░░▒▓█▓▒░░▒▓█▓▒░▒▓████████▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░ `;
+
+const GHOST_ART = `
+    .-.
+   (o.o)
+    |=|
+   __|__
+ //.=|=.\\\\
+// .=|=. \\\\
+\\\\ .=|=. //
+ \\\\(_=_)//
+  (:| |:)
+   || ||
+   () ()
+   || ||
+   || ||
+  ==' '==`;
+
+const FILE_SYSTEM = {
+  '~': {
+    type: 'dir',
+    children: {
+
+      'projects': {
+        type: 'dir',
+        children: {
+
+          'infernal-labyrinth': {
+            type: 'file',
+            data: {
+              title: 'Infernal Labyrinth',
+              subtitle: 'Procedurally generated text-based dungeon crawler in C++',
+              tags: [{ label: 'C++', class: 'tag-peach' }, { label: 'CLI', class: 'tag-blue' }, { label: 'Game Dev', class: 'tag-mauve' }],
+              description: `A fully text-based dungeon crawler built from scratch in C++. The entire experience lives in the terminal — no graphics, no UI, just text input and output. Each run procedurally generates a unique branching network of rooms populated with enemies, riddles, and loot.
+
+Combat and navigation are driven entirely through typed commands. The game tracks player stats, inventory, and room state across a dynamically generated room graph.
+
+The most interesting design challenge was the "save fight" mechanic — players can flag enemies to come back to later rather than fighting them immediately. This adds a layer of routing strategy to the dungeon crawl, forcing decisions about resource management and path ordering that most dungeon crawlers don't require.`,
+              tech: ['C++', 'Procedural Generation', 'OOP'],
+              features: [
+                { title: '// Text-Based CLI', desc: 'Entirely terminal-driven — all interaction through typed commands, all output through formatted text' },
+                { title: '// Procedural Generation', desc: 'Each run generates a unique branching room graph — enemies, riddles, and paths are never the same' },
+                { title: '// Save Fight Mechanic', desc: 'Flag enemies to revisit later — forces routing and resource decisions across the dungeon' },
+                { title: '// Battle Engine', desc: 'Turn-based combat system handling player stats, enemy behaviour, and item interactions' }
+              ],
+              stats: [{ n: 'C++', l: 'Language' }, { n: '0', l: 'Dependencies' }, { n: 'Infinite', l: 'Replayability' }],
+              code: null
+            }
+          },
+
+          'stealth-packer': {
+            type: 'file',
+            data: {
+              title: 'Stealth Packer',
+              subtitle: 'Executable packer using compression and encoding to reduce AV false-positive rates',
+              tags: [{ label: 'Rust', class: 'tag-peach' }, { label: 'Security Research', class: 'tag-blue' }, { label: 'EXE / ELF', class: 'tag-green' }],
+              description: `A binary packer built in Rust for security research and authorised red team use. It processes EXE and ELF binaries through a pipeline of compression and Base64 encoding to produce a wrapped output that is structurally distinct from the original — reducing false-positive detections from heuristic-based antivirus engines.
+
+Integrates with msfvenom to streamline the payload generation workflow during authorised penetration tests: the packer accepts msfvenom arguments directly, generates the raw payload, and runs it through the packing pipeline in a single step.
+
+Built to better understand how AV detection heuristics work and where they fall short. All testing was performed against owned systems and in isolated lab environments.`,
+              tech: ['Rust', 'Binary Compression', 'Base64', 'msfvenom integration'],
+              features: [
+                { title: '// Compression + Encoding', desc: 'Pipeline of binary compression followed by Base64 encoding produces a structurally unique output' },
+                { title: '// EXE + ELF Support', desc: 'Handles both Windows (EXE) and Linux (ELF) binaries in a single tool' },
+                { title: '// msfvenom Integration', desc: 'Pass msfvenom args directly — the tool generates the payload and packs it in one command' },
+                { title: '// Research Focused', desc: 'Built to study AV heuristic detection — tested exclusively in lab environments and authorised engagements' }
+              ],
+              stats: [{ n: '0/62', l: 'VT Detections' }, { n: '2', l: 'File Formats' }, { n: 'Rust', l: 'Language' }],
+              code: null
+            }
+          },
+
+          'riscv-emulator': {
+            type: 'file',
+            data: {
+              title: 'RISC-V Emulator',
+              subtitle: 'RISC-V instruction set emulator written in C',
+              tags: [{ label: 'C', class: 'tag-blue' }, { label: 'Emulation', class: 'tag-green' }, { label: 'Low-Level', class: 'tag-teal' }],
+              description: `A RISC-V emulator written in C that decodes real RISC-V binary instructions and executes them on x86 hardware. Given a binary, the emulator reads each instruction from raw bytes, decodes all fields — opcode, registers, immediates, function codes — and carries out the corresponding operation using bitwise logic that maps directly to the RISC-V ISA specification.
+
+The project was motivated by wanting to understand exactly how cross-architecture compatibility works at the instruction level, rather than relying on existing tooling as a black box. Every operation is implemented from the spec — no shortcuts, no abstraction libraries.`,
+              tech: ['C', 'RISC-V ISA', 'Bitwise Operations', 'Binary Parsing'],
+              features: [
+                { title: '// Instruction Decoder', desc: 'Parses raw binary bytes into RISC-V instruction fields — opcode, rd, rs1, rs2, funct3/7, immediates' },
+                { title: '// RV32I Coverage', desc: 'Implements R, I, S, B, U, and J type instructions from the RV32I base integer instruction set' },
+                { title: '// Register File', desc: '32 general-purpose registers modeled accurately with x0 hardwired to zero per spec' },
+                { title: '// Zero Dependencies', desc: 'Pure C — no emulation libraries, no external tooling, everything implemented from the ISA spec' }
+              ],
+              stats: [{ n: 'RV32I', l: 'ISA Target' }, { n: 'C', l: 'Language' }, { n: '0', l: 'External Libs' }],
+              code: null
+            }
+          },
+
+          'pi-homelab': {
+            type: 'file',
+            data: {
+              title: 'Pi Homelab',
+              subtitle: 'Self-hosted VPN and K3s cluster — Raspberry Pi head node, old laptops as workers',
+              tags: [{ label: 'Networking', class: 'tag-blue' }, { label: 'K3s', class: 'tag-teal' }, { label: 'Self-Hosted', class: 'tag-green' }, { label: 'Bash', class: 'tag-peach' }],
+              description: `A self-hosted homelab built from a Raspberry Pi and repurposed old laptops. The Pi acts as the head node running a K3s (lightweight Kubernetes) cluster, with the laptops joined as worker nodes over the internal VPN tunnel.
+
+The VPN layer is WireGuard, configured so all personal device traffic is encrypted and routed through the Pi before exiting via a SOCKS5 proxy — keeping outbound requests from originating directly from the home IP. The internal tunnel IPs connect the Pi and laptop cluster, making the workers accessible as part of the same private network regardless of where the Pi is sitting.
+
+Everything runs on hardware that would otherwise be collecting dust. The cluster hosts personal services and acts as a local dev and testing environment.`,
+              tech: ['WireGuard', 'K3s / Kubernetes', 'SOCKS5', 'Raspberry Pi', 'Bash', 'iptables'],
+              features: [
+                { title: '// WireGuard VPN', desc: 'All device traffic encrypted and routed through the Pi — exits via SOCKS5 proxy, not home IP' },
+                { title: '// K3s Cluster', desc: 'Lightweight Kubernetes cluster with Pi as head node and old laptops as worker nodes' },
+                { title: '// Internal Tunnel Network', desc: 'VPN tunnel IPs connect Pi and laptop workers into one private network for cluster communication' },
+                { title: '// Repurposed Hardware', desc: 'Entire setup runs on a Raspberry Pi and old laptops — no dedicated server hardware' }
+              ],
+              stats: [{ n: 'K3s', l: 'Orchestration' }, { n: 'WireGuard', l: 'Encryption' }, { n: '✓', l: 'Completed' }],
+              code: null
+            }
+          },
+
+          'string-vector': {
+            type: 'file',
+            data: {
+              title: 'String Vector',
+              subtitle: 'STL-style dynamic string array built from scratch in C++ using raw memory',
+              tags: [{ label: 'C++', class: 'tag-peach' }, { label: 'Data Structures', class: 'tag-blue' }, { label: 'Memory', class: 'tag-teal' }],
+              description: `A hand-rolled dynamic array class for strings, built on raw dynamic memory allocation in C++ with no STL or smart pointers. Implements the full interface you would expect from a standard vector — get, set, insert, pop, remove, print, and size — along with automatic resizing to handle growth without manual reallocation.
+
+The point of the project was to understand exactly what the STL vector is doing under the hood. Writing manual new/delete, handling copy semantics correctly, and reasoning about when and how to resize forced a much deeper understanding of memory layout and allocation strategy than just using std::vector ever would have.`,
+              tech: ['C++', 'Dynamic Memory Allocation', 'RAII'],
+              features: [
+                { title: '// Raw Memory Management', desc: 'Manual new[]/delete[] with explicit copy constructor and assignment operator — no smart pointers' },
+                { title: '// String-Typed', desc: 'Stores std::string elements with correct value semantics and deep copy on resize' },
+                { title: '// Full Method Suite', desc: 'get, set, insert, pop, remove, print, size — complete interface matching expected vector behaviour' },
+                { title: '// Auto-resize', desc: 'Doubles capacity on overflow to keep insertions amortized O(1) over many operations' }
+              ],
+              stats: [{ n: 'O(1)', l: 'Amortized Push' }, { n: 'Strings', l: 'Element Type' }, { n: 'Zero', l: 'STL Usage' }],
+              code: null
+            }
+          }
+
+        }
+      },
+
+      // ── EXPERIENCE ────────────────────────────────────────────
+      'experience': {
+        type: 'dir',
+        children: {
+          'fcc-internship.md': {
+            type: 'file',
+            data: {
+              title: 'Junior Developer — FCC',
+              subtitle: 'FCC · Internship · Summer 2025',
+              tags: [{ label: 'Internship', class: 'tag-green' }, { label: 'Upcoming', class: 'tag-mauve' }],
+              description: `Incoming junior developer internship at FCC starting summer 2025. First industry role — working as part of a development team in a professional software environment.
+
+This is an upcoming position. Details will be updated once the internship begins.`,
+              tech: ['TBD'],
+              features: [
+                { title: '// Role', desc: 'Junior Developer — contributing to software development in a team environment' },
+                { title: '// Organization', desc: 'FCC (First Canadian Capital Corp)' },
+                { title: '// Timeline', desc: 'Summer 2025 — upcoming, not yet started' },
+                { title: '// Status', desc: 'First industry internship alongside Software Systems studies at SFU' }
+              ],
+              stats: [{ n: 'Summer', l: 'Start' }, { n: '2025', l: 'Year' }, { n: 'First', l: 'Industry Role' }],
+              code: null
+            }
+          }
+        }
+      },
+
+      // ── SKILLS ────────────────────────────────────────────────
+      'skills': {
+        type: 'dir',
+        children: {
+          'languages.md': {
+            type: 'file',
+            data: {
+              title: 'languages.md',
+              subtitle: 'Programming languages — daily drivers and working knowledge',
+              tags: [{ label: 'Skills', class: 'tag-green' }, { label: 'Languages', class: 'tag-blue' }],
+              description: `Languages I write regularly across systems, security tooling, and coursework.
+Honest proficiency — no filler.`,
+              tech: [],
+              features: [
+                { title: '// C / C++', desc: 'Primary language for systems work — used in the RISC-V emulator, VPN tooling, and dungeon crawler. Comfortable with manual memory management and low-level behaviour.' },
+                { title: '// Rust', desc: 'Used for security tooling including the Stealth Packer. Drawn to it for memory safety without sacrificing control.' },
+                { title: '// Python', desc: 'Scripting, automation, and security tooling. Used for CTF scripts, tooling glue, and rapid prototyping.' },
+                { title: '// Bash / ZSH', desc: 'Daily shell environment. Write scripts for automation, system config, and build tasks routinely.' },
+                { title: '// Java', desc: 'University coursework and software systems projects. Comfortable with OOP patterns and the JVM.' },
+                { title: '// English + French', desc: 'Bilingual — native-level English, working French.' }
+              ],
+              stats: [{ n: '5', l: 'Prog. Languages' }, { n: 'C/C++', l: 'Primary' }, { n: '2', l: 'Spoken Languages' }],
+              code: null
+            }
+          },
+          'tools.md': {
+            type: 'file',
+            data: {
+              title: 'tools.md',
+              subtitle: 'Security tools, dev tools, and everyday utilities',
+              tags: [{ label: 'Skills', class: 'tag-green' }, { label: 'Tools', class: 'tag-peach' }],
+              description: `Tools I actually use — both for security work and day-to-day development. Not a buzzword list.`,
+              tech: [],
+              features: [
+                { title: '// Linux / CLI', desc: 'Primary OS — Kali Linux with Hyprland. Comfortable in the terminal for everything from development to system administration.' },
+                { title: '// Git', desc: 'Version control for all personal projects. Feature branches, rebasing, and commit hygiene.' },
+                { title: '// Networking', desc: 'Solid fundamentals — TCP/IP, DNS, routing, iptables, WireGuard. Applied through the Pi homelab build.' },
+                { title: '// Burp Suite', desc: 'Web proxy for HTB/THM web challenges and manual HTTP inspection.' },
+                { title: '// Wireshark', desc: 'Packet analysis for network troubleshooting and CTF network forensics.' },
+                { title: '// Virtual Machines', desc: 'Extensive VM usage for isolated lab environments — spinning up Windows and Linux targets for testing, malware analysis, and CTF work.' }
+              ],
+              stats: [{ n: 'Kali', l: 'Daily Driver' }, { n: 'neovim', l: 'Editor' }, { n: 'VM-heavy', l: 'Workflow' }],
+              code: null
+            }
+          },
+          'platforms.md': {
+            type: 'file',
+            data: {
+              title: 'platforms.md',
+              subtitle: 'HackTheBox, TryHackMe — active pentesting on real machines',
+              tags: [{ label: 'Skills', class: 'tag-green' }, { label: 'HTB', class: 'tag-red' }, { label: 'THM', class: 'tag-teal' }],
+              description: `Active on both HackTheBox and TryHackMe. Primary focus is on machine-based challenges — full pentest workflows from enumeration to root, rather than isolated CTF puzzles.
+
+Currently working through easy-difficulty boxes, building a consistent methodology around recon, enumeration, foothold, and privilege escalation before moving up in difficulty.
+
+The hands-on machine format is more relevant to real-world pentesting than most structured courses — you get a live target, no hints, and have to figure it out.`,
+              tech: ['nmap', 'Burp Suite', 'Metasploit', 'Gobuster', 'LinPEAS / WinPEAS', 'John / Hashcat'],
+              features: [
+                { title: '// HackTheBox', desc: 'Active account — working through easy machines with full enumeration-to-root methodology' },
+                { title: '// TryHackMe', desc: 'Completed guided rooms and free-roam machines across multiple categories' },
+                { title: '// Methodology', desc: 'Recon → enumeration → foothold → privesc → report. Consistent process on every box.' },
+                { title: '// Focus', desc: 'Machine-based challenges over isolated CTF puzzles — closer to real penetration testing workflow' }
+              ],
+              stats: [{ n: 'Easy', l: 'Current Level' }, { n: 'Linux+Win', l: 'Both Targets' }, { n: 'Active', l: 'Status' }],
+              code: null
+            }
+          }
+        }
+      },
+
+      // ── EDUCATION ─────────────────────────────────────────────
+      'education': {
+        type: 'dir',
+        children: {
+          'sfu.md': {
+            type: 'file',
+            data: {
+              title: 'Simon Fraser University',
+              subtitle: 'B.Sc. Software Systems · Currently Enrolled',
+              tags: [{ label: 'Education', class: 'tag-mauve' }, { label: 'Current', class: 'tag-green' }],
+              description: `Currently enrolled in the Software Systems program at Simon Fraser University (SFU) in Burnaby, BC.
+
+Software Systems sits at the intersection of computer science and engineering — covering systems programming, computer architecture, operating systems, networking, and software design. A good match for the kind of low-level work I do outside of class.
+
+Started programming in 2016 — following tutorials on how to make games, then branching outward from there into systems, security, and everything else. Enrolled at SFU in 2024. Most of what I know about security and systems came from self-directed projects and research — university provides the formal foundation and fills in the gaps.`,
+              tech: ['C / C++', 'Java', 'Python', 'x86 Architecture', 'OS Concepts', 'Networking'],
+              features: [
+                { title: '// Program', desc: 'B.Sc. Software Systems — systems programming, architecture, OS, networking, software engineering' },
+                { title: '// University', desc: 'Simon Fraser University — Burnaby, BC, Canada' },
+                { title: '// Status', desc: 'Currently enrolled — ongoing' },
+                { title: '// Self-Directed', desc: 'Security and low-level systems knowledge built independently since 2016 alongside formal studies' }
+              ],
+              stats: [{ n: 'SFU', l: 'University' }, { n: 'B.Sc.', l: 'Degree' }, { n: 'Active', l: 'Status' }],
+              code: null
+            }
+          },
+          'ibm-ethical-hacking.md': {
+            type: 'file',
+            data: {
+              title: 'IBM Ethical Hacking with Open Source Tools',
+              subtitle: 'IBM / Coursera · Certificate · Completed',
+              tags: [{ label: 'Certificate', class: 'tag-blue' }, { label: 'IBM', class: 'tag-peach' }, { label: 'Completed', class: 'tag-teal' }],
+              description: `Completed the IBM Ethical Hacking with Open Source Tools certificate through Coursera. The course covers the ethical hacking methodology end-to-end using open-source tooling — reconnaissance, scanning, enumeration, exploitation, and reporting.
+
+Relevant as a structured complement to the hands-on HTB/THM work — puts formal names and frameworks around techniques already being applied in practice.`,
+              tech: ['Nmap', 'Metasploit', 'Wireshark', 'OpenVAS', 'Nikto'],
+              features: [
+                { title: '// Provider', desc: 'IBM — delivered via Coursera' },
+                { title: '// Content', desc: 'Full ethical hacking lifecycle: recon, scanning, enumeration, exploitation, post-exploitation, reporting' },
+                { title: '// Tools Covered', desc: 'Open-source security tooling — Nmap, Metasploit, Wireshark, OpenVAS, Nikto, and more' },
+                { title: '// Status', desc: 'Completed — certificate issued' }
+              ],
+              stats: [{ n: 'IBM', l: 'Issuer' }, { n: '✓', l: 'Completed' }, { n: 'Coursera', l: 'Platform' }],
+              code: null
+            }
+          },
+
+          'oscp.md': {
+            type: 'file',
+            data: {
+              title: 'OSCP — Offensive Security Certified Professional',
+              subtitle: 'Offensive Security · Currently Studying',
+              tags: [{ label: 'Certificate', class: 'tag-red' }, { label: 'In Progress', class: 'tag-yellow' }, { label: 'OffSec', class: 'tag-mauve' }],
+              description: `Currently studying for the OSCP — Offensive Security Certified Professional. The OSCP is a hands-on penetration testing certification from Offensive Security, widely regarded as one of the most respected entry-level offensive security credentials in the industry.
+
+The exam is a 24-hour practical assessment: you're given a set of machines and have to compromise them, then write a professional penetration test report. No multiple choice, no theory — just live targets.
+
+Preparing through a combination of HTB machines, PEN-200 course material, and building out a consistent methodology around enumeration, exploitation, and privilege escalation on both Linux and Windows targets.`,
+              tech: ['Nmap', 'Metasploit', 'Burp Suite', 'BloodHound', 'Impacket', 'LinPEAS / WinPEAS'],
+              features: [
+                { title: '// Certification', desc: 'OSCP — Offensive Security Certified Professional, issued by Offensive Security' },
+                { title: '// Exam Format', desc: '24-hour practical exam — compromise live machines, submit a professional pentest report' },
+                { title: '// Preparation', desc: 'PEN-200 course material, HTB practice machines, and building consistent pentest methodology' },
+                { title: '// Status', desc: 'Currently studying — exam not yet scheduled' }
+              ],
+              stats: [{ n: 'OffSec', l: 'Issuer' }, { n: '24hr', l: 'Exam Format' }, { n: 'Studying', l: 'Status' }],
+              code: null
+            }
+          }
+        }
+      },
+
+      'about.md': {
+        type: 'file',
+        data: {
+          title: 'about.md',
+          subtitle: 'Zh0s7 — Offensive Security / Systems Engineer',
+          tags: [{ label: 'About', class: 'tag-green' }],
+          description: `handle: Zh0s7
+started: 2016
+loc:    somewhere in the static
+
+I build things at the intersection of offensive security and systems engineering. Most of my time goes into low-level tooling, infrastructure, and understanding how software breaks — then writing something that proves it.
+
+Started breaking things before I understood them. Still do — but now I know why they break.
+
+Currently focused on:
+  → Offensive security tooling & packer research
+  → Systems programming in C, C++, and Rust
+  → HackTheBox & TryHackMe — pentesting real machines
+  → Self-hosted infrastructure and homelab development
+
+Languages: C/C++, Rust, Python, Bash/ZSH, Java
+Spoken:    English, French
+
+When I'm not in a terminal I'm reading ISA specs
+or figuring out why my iptables rules aren't working.`,
+          tech: ['C / C++', 'Rust', 'Python', 'Bash / ZSH', 'Java'],
+          features: [
+            { title: '// Offensive', desc: 'Packer research, AV evasion techniques, penetration testing on HTB and THM' },
+            { title: '// Systems', desc: 'Emulators, custom data structures, self-hosted infrastructure, K3s homelab' },
+            { title: '// Platforms', desc: 'Active on HackTheBox and TryHackMe — pentesting real simulated machines' },
+            { title: '// Languages', desc: 'Bilingual — English and French. Code in C/C++, Rust, Python, Java, Bash' }
+          ],
+          stats: [{ n: '19', l: 'Online' }, { n: '5', l: 'Projects' }, { n: '3AM', l: 'Commit Time' }],
+          code: null
+        }
+      },
+
+
+    }
+  }
+};
+
+// ============================================================
+// STATE
+// ============================================================
+
+let currentPath = ['~'];
+let cmdHistory = [];
+let historyIdx = -1;
+let viewMode = false;
+let booted = false;
+
+const BOOT_LINES = [
+  { text: 'UEFI firmware version 2.8 loading...', delay: 0, cls: 'line-muted' },
+  { text: 'Initializing memory controller... OK', delay: 60, cls: 'line-muted' },
+  { text: 'ACPI tables: loaded', delay: 100, cls: 'line-muted' },
+  { text: 'Loading initramfs...', delay: 140, cls: 'line-muted' },
+  { text: 'Decompressing kernel image... OK', delay: 200, cls: 'line-muted' },
+  { text: 'Mounting root filesystem... OK', delay: 260, cls: 'line-muted' },
+  { text: 'Starting udev daemon... OK', delay: 310, cls: 'line-muted' },
+  { text: 'Loading kernel modules:', delay: 360, cls: 'line-muted' },
+  { text: '  → crypto/sha256  [OK]', delay: 390, cls: 'line-muted' },
+  { text: '  → net/ipv4       [OK]', delay: 420, cls: 'line-muted' },
+  { text: '  → drivers/input  [OK]', delay: 450, cls: 'line-muted' },
+  { text: '  → fs/ext4        [OK]', delay: 480, cls: 'line-muted' },
+  { text: 'Starting network services... OK', delay: 540, cls: 'line-muted' },
+  { text: 'Starting zsh session for Zh0s7...', delay: 600, cls: 'line-success' },
+  { text: '', delay: 660, cls: '' },
+  { text: '┌──────────────────────────────────────────────────────────────┐', delay: 700, cls: 'line-mauve' },
+  { text: '│ WARNING: Unauthorized access to this system is prohibited.   │', delay: 720, cls: 'line-mauve' },
+  { text: '│ All activity is logged. By continuing you accept monitoring. │', delay: 740, cls: 'line-mauve' },
+  { text: '└──────────────────────────────────────────────────────────────┘', delay: 760, cls: 'line-mauve' },
+  { text: '', delay: 800, cls: '' },
+];
+
+// ============================================================
+// TERMINAL RENDERING
+// ============================================================
+
+const body = document.getElementById('terminal-body');
+const input = document.getElementById('cmd-input');
+const pathDisplay = document.getElementById('path-display');
+const titleText = document.getElementById('title-text');
+
+function getPathStr() {
+  if (currentPath.length === 1) return '~';
+  return currentPath.join('/');
+}
+
+function updatePrompt() {
+  const p = getPathStr();
+  pathDisplay.textContent = p;
+  titleText.textContent = `Zh0s7@void: ${p}`;
+}
+
+function appendLine(text, cls = '') {
+  const div = document.createElement('div');
+  div.className = `line ${cls}`;
+  div.textContent = text;
+  body.appendChild(div);
+  body.scrollTop = body.scrollHeight;
+  return div;
+}
+
+function appendHTML(html, cls = '') {
+  const div = document.createElement('div');
+  div.className = `line ${cls}`;
+  div.innerHTML = html;
+  body.appendChild(div);
+  body.scrollTop = body.scrollHeight;
+  return div;
+}
+
+function appendPromptLine(cmd) {
+  const p = getPathStr();
+  appendHTML(
+    `<span style="color:var(--mauve);font-weight:700">Zh0s7</span>` +
+    `<span style="color:var(--overlay1)">@</span>` +
+    `<span style="color:var(--blue)">void</span> ` +
+    `<span style="color:var(--teal)">${p}</span>` +
+    `<span style="color:var(--green)"> $ </span>` +
+    `<span style="color:var(--text)">${escapeHtml(cmd)}</span>`
+  );
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ============================================================
+// BOOT SEQUENCE
+// ============================================================
+
+function runBoot() {
+  const last = BOOT_LINES[BOOT_LINES.length - 1].delay;
+  BOOT_LINES.forEach(({ text, delay, cls }) => {
+    setTimeout(() => appendLine(text, cls), delay);
+  });
+  setTimeout(() => showNeofetch(), last + 80);
+}
+
+function showNeofetch() {
+  const artDiv = document.createElement('div');
+  artDiv.className = 'ascii-art line';
+  artDiv.style.display = 'inline-block';
+  artDiv.style.color = 'var(--mauve)';
+  artDiv.style.marginTop = '8px';
+
+  const infoDiv = document.createElement('div');
+  infoDiv.style.display = 'inline-block';
+  infoDiv.style.verticalAlign = 'top';
+  infoDiv.style.marginLeft = '24px';
+  infoDiv.style.marginTop = '8px';
+
+  const container = document.createElement('div');
+  container.style.display = 'flex';
+  container.style.marginBottom = '8px';
+  container.appendChild(artDiv);
+  container.appendChild(infoDiv);
+  body.appendChild(container);
+
+  artDiv.textContent = GHOST_ART;
+
+  const info = [
+    ['', `<span style="color:var(--mauve);font-weight:700">Zh0s7</span><span style="color:var(--overlay1)">@</span><span style="color:var(--blue)">void</span>`],
+    ['', '─'.repeat(18)],
+    ['OS', `<span style="color:var(--green)">Zh0s7 Arch (Rolling)</span>`],
+    ['Host', `<span style="color:var(--blue)">Web</span>`],
+    ['Kernel', `<span style="color:var(--blue)">6.8.1-zh0s7-custom</span>`],
+    ['Uptime', `<span style="color:var(--peach)">${UPTIME}</span>`],
+    ['Shell', `<span style="color:var(--teal)">zsh 5.9</span>`],
+    ['Editor', `<span style="color:var(--teal)">neovim</span>`],
+    ['WM', `<span style="color:var(--mauve)">Hyprland</span>`],
+    ['Theme', `<span style="color:var(--mauve)">Catppuccin Mocha</span>`],
+    ['', ''],
+    ['', `<span style="color:var(--red)">███</span><span style="color:var(--peach)">███</span><span style="color:var(--yellow)">███</span><span style="color:var(--green)">███</span><span style="color:var(--teal)">███</span><span style="color:var(--blue)">███</span><span style="color:var(--mauve)">███</span><span style="color:var(--pink)">███</span>`],
+  ];
+
+  info.forEach(([label, val]) => {
+    const row = document.createElement('div');
+    row.style.fontSize = '12px';
+    row.style.lineHeight = '1.7';
+    if (label) {
+      row.innerHTML = `<span style="color:var(--blue);font-weight:600">${label}</span><span style="color:var(--overlay0)">: </span>${val}`;
+    } else {
+      row.innerHTML = val;
+    }
+    infoDiv.appendChild(row);
+  });
+
+  body.scrollTop = body.scrollHeight;
+
+  setTimeout(() => {
+    appendLine('');
+    appendLine('Type `help` for available commands.', 'line-muted');
+    appendLine('');
+    booted = true;
+    input.disabled = false;
+    input.focus();
+    body.scrollTop = body.scrollHeight;
+  }, 300);
+}
+
+// ============================================================
+// FILE SYSTEM HELPERS
+// ============================================================
+
+function getDirAtPath(path) {
+  let node = FILE_SYSTEM['~'];
+  if (path.length === 1) return node.children;
+  for (let i = 1; i < path.length; i++) {
+    if (node.children && node.children[path[i]]) {
+      node = node.children[path[i]];
+    } else return null;
+  }
+  return node.children || null;
+}
+
+// ============================================================
+// COMMAND PARSER
+// ============================================================
+
+const COMMANDS = ['ls', 'cd', 'cat', 'whoami', 'sudo', 'clear', 'help', 'pwd', 'uname', 'exit', 'man', 'echo'];
+
+function levenshtein(a, b) {
+  const m = a.length, n = b.length;
+  const dp = Array.from({length: m+1}, (_, i) => [i, ...Array(n).fill(0)]);
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++)
+    for (let j = 1; j <= n; j++)
+      dp[i][j] = a[i-1] === b[j-1] ? dp[i-1][j-1] : 1 + Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
+  return dp[m][n];
+}
+
+function closestCommand(cmd) {
+  let best = null, bestDist = Infinity;
+  for (const c of COMMANDS) {
+    const d = levenshtein(cmd, c);
+    if (d < bestDist) { bestDist = d; best = c; }
+  }
+  return bestDist <= 3 ? best : null;
+}
+
+function handleCommand(raw) {
+  const trimmed = raw.trim();
+  if (!trimmed) return;
+
+  appendPromptLine(trimmed);
+  cmdHistory.unshift(trimmed);
+  historyIdx = -1;
+
+  const parts = trimmed.split(/\s+/);
+  const cmd = parts[0].toLowerCase();
+  const args = parts.slice(1);
+
+  switch (cmd) {
+    case 'help': cmdHelp(); break;
+    case 'ls': cmdLs(); break;
+    case 'pwd': appendLine(getPathStr(), 'line-teal'); break;
+    case 'cd': cmdCd(args[0]); break;
+    case 'cat': cmdCat(args[0]); break;
+    case 'clear': body.innerHTML = ''; break;
+    case 'whoami': appendLine('chud', 'line-success'); break;
+    case 'uname': appendLine('Linux void 6.8.1-zh0s7-custom #1 SMP x86_64 GNU/Linux', 'line-info'); break;
+    case 'exit':
+      if (viewMode) exitViewMode();
+      else appendLine('Cannot exit: this is your life now.', 'line-warning');
+      break;
+    case 'sudo':
+      appendLine("chuds dont get perms nice try", 'line-error');
+      break;
+    case 'echo':
+      appendLine(args.join(' '));
+      break;
+    case 'man':
+      if (!args[0]) { appendLine('What manual page do you want?', 'line-warning'); break; }
+      appendLine(`No manual entry for ${args[0]}. Try 'help'.`, 'line-error');
+      break;
+    default: {
+      const suggestion = closestCommand(cmd);
+      if (suggestion) {
+        appendHTML(
+          `<span style="color:var(--red)">bash: ${escapeHtml(cmd)}: command not found.</span> ` +
+          `<span style="color:var(--overlay0)">Did you mean </span>` +
+          `<span style="color:var(--yellow)">${suggestion}</span><span style="color:var(--overlay0)">?</span>`
+        );
+      } else {
+        appendLine(`bash: ${cmd}: command not found`, 'line-error');
+      }
+    }
+  }
+
+  appendLine('');
+  body.scrollTop = body.scrollHeight;
+}
+
+function cmdHelp() {
+  appendLine('');
+  appendLine('Available commands:', 'line-blue');
+  appendLine('');
+  const cmds = [
+    ['ls', 'list directory contents'],
+    ['cd [dir]', 'change directory (cd .. to go up)'],
+    ['cat [file]', 'open and display a file'],
+    ['pwd', 'print working directory'],
+    ['whoami', 'print current user'],
+    ['uname', 'print system information'],
+    ['sudo [cmd]', 'run as superuser (lol)'],
+    ['echo [text]', 'print text to terminal'],
+    ['clear', 'clear terminal screen'],
+    ['help', 'show this help text'],
+    ['exit', 'exit view mode (or your life)'],
+  ];
+  
+  const table = document.createElement('table');
+  table.className = 'help-table';
+  cmds.forEach(([c, d]) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${c}</td><td>${d}</td>`;
+    table.appendChild(tr);
+  });
+  const wrap = document.createElement('div');
+  wrap.className = 'line';
+  wrap.appendChild(table);
+  body.appendChild(wrap);
+}
+
+function cmdLs() {
+  const dir = getDirAtPath(currentPath);
+  if (!dir) { appendLine('ls: cannot access directory', 'line-error'); return; }
+  
+  const entries = Object.keys(dir);
+  if (entries.length === 0) { appendLine('(empty)', 'line-muted'); return; }
+  
+  const wrap = document.createElement('div');
+  wrap.className = 'line ls-grid';
+  
+  entries.forEach(name => {
+    const span = document.createElement('span');
+    const node = dir[name];
+    if (node.type === 'dir') {
+      span.className = 'ls-dir';
+      span.textContent = name + '/';
+    } else {
+      span.className = 'ls-file';
+      span.textContent = name;
+    }
+    wrap.appendChild(span);
+  });
+  
+  body.appendChild(wrap);
+}
+
+function cmdCd(target) {
+  if (!target || target === '~') {
+    currentPath = ['~'];
+    updatePrompt();
+    return;
+  }
+
+  // Split path into segments and walk them one by one
+  const segments = target.split('/').filter(s => s !== '');
+  let newPath = target.startsWith('~')
+    ? ['~']
+    : [...currentPath];
+
+  for (const seg of segments) {
+    if (seg === '~') {
+      newPath = ['~'];
+    } else if (seg === '..') {
+      if (newPath.length > 1) newPath.pop();
+      else { appendLine('Already at root.', 'line-warning'); return; }
+    } else if (seg === '.') {
+      // stay put
+    } else {
+      const dir = getDirAtPath(newPath);
+      if (!dir || !dir[seg]) {
+        appendLine(`cd: ${seg}: No such file or directory`, 'line-error');
+        return;
+      }
+      if (dir[seg].type !== 'dir') {
+        appendLine(`cd: ${seg}: Not a directory`, 'line-error');
+        return;
+      }
+      newPath.push(seg);
+    }
+  }
+
+  currentPath = newPath;
+  updatePrompt();
+}
+
+function cmdCat(filename) {
+  if (!filename) {
+    appendLine('Usage: cat [filename]', 'line-warning');
+    return;
+  }
+  
+  const dir = getDirAtPath(currentPath);
+  if (!dir) { appendLine(`cat: ${filename}: No such file or directory`, 'line-error'); return; }
+  
+  const node = dir[filename];
+  if (!node) {
+    appendLine(`cat: ${filename}: No such file or directory`, 'line-error');
+    return;
+  }
+  if (node.type === 'dir') {
+    appendLine(`cat: ${filename}: Is a directory`, 'line-error');
+    return;
+  }
+  
+  appendLine(`Opening ${filename}...`, 'line-muted');
+  setTimeout(() => enterViewMode(node.data), 300);
+}
+
+// ============================================================
+// VIEW MODE
+// ============================================================
+
+function enterViewMode(data) {
+  viewMode = true;
+  
+  const viewer = document.getElementById('project-viewer');
+  const content = document.getElementById('project-content');
+  
+  // Build content
+  content.innerHTML = buildProjectHTML(data);
+  
+  viewer.style.display = 'flex';
+  requestAnimationFrame(() => {
+    viewer.classList.add('faded-in');
+  });
+  
+  // Hide terminal completely
+  const term = document.getElementById('terminal-window');
+  term.classList.remove('fullscreen', 'minimized', 'overlay');
+  term.classList.add('hidden');
+  termVisible = false;
+  input.disabled = true;
+  input.value = '';
+  input.blur();
+
+  // Show FAB
+  const fab = document.getElementById('terminal-fab');
+  fab.style.display = 'flex';
+}
+
+function exitViewMode() {
+  viewMode = false;
+  
+  const viewer = document.getElementById('project-viewer');
+  viewer.classList.remove('faded-in');
+  setTimeout(() => { viewer.style.display = 'none'; }, 400);
+  
+  // Restore terminal
+  const term = document.getElementById('terminal-window');
+  term.classList.remove('hidden', 'minimized', 'overlay');
+  term.classList.add('fullscreen');
+  termVisible = true;
+  input.disabled = false;
+  
+  // Hide FAB
+  document.getElementById('terminal-fab').style.display = 'none';
+  
+  appendLine('Exited view mode.', 'line-muted');
+  appendLine('');
+  input.focus();
+}
+
+function buildProjectHTML(d) {
+  const tags = d.tags.map(t => `<span class="project-tag ${t.class}">${t.label}</span>`).join('');
+  
+  const features = d.features.map(f => `
+    <div class="feature-card">
+      <h4>${f.title}</h4>
+      <p>${f.desc}</p>
+    </div>
+  `).join('');
+
+  const tech = d.tech.map(t => `<span class="tech-pill">${t}</span>`).join('');
+  
+  const stats = d.stats.map(s => `
+    <div class="stat">
+      <span class="stat-number">${s.n}</span>
+      <span class="stat-label">${s.l}</span>
+    </div>
+  `).join('');
+
+  return `
+    <div class="project-header">
+      <div>${tags}</div>
+      <h1 class="project-title">${d.title}</h1>
+      <p class="project-subtitle">${d.subtitle}</p>
+      <div class="exit-hint">
+        Press <kbd>\`</kbd> or click <kbd>&gt;_ terminal</kbd> to toggle terminal &nbsp;·&nbsp; type <kbd>exit</kbd> to go back
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section-label">// overview</div>
+    <div class="project-desc" style="white-space:pre-line">${escapeHtml(d.description)}</div>
+
+    ${d.stats.length ? `
+    <div class="stat-row">${stats}</div>
+    <div class="divider"></div>
+    ` : ''}
+
+    ${d.tech.length ? `
+    <div class="section-label">// tech stack</div>
+    <div class="tech-stack">${tech}</div>
+    ` : ''}
+
+    ${d.features.length ? `
+    <div class="section-label">// features</div>
+    <div class="feature-grid">${features}</div>
+    ` : ''}
+
+    <div class="divider" style="margin-top: 40px;"></div>
+    <div style="display:flex; align-items:center; gap:12px; padding: 16px 0 8px; color: var(--overlay0); font-size: 11px; letter-spacing: 0.08em;">
+      <span>── EOF</span>
+      <span style="flex:1; height:1px; background: var(--surface0); display:inline-block;"></span>
+      <span style="color:var(--surface2)">type <span style="color:var(--overlay0)">exit</span> to go back</span>
+    </div>
+  `;
+}
+
+// ============================================================
+// TERMINAL CONTROLS
+// ============================================================
+
+function closeTerm() {
+  const t = document.getElementById('terminal-window');
+  t.classList.add('hidden');
+  termVisible = false;
+  input.disabled = true;
+  input.value = '';
+  input.blur();
+  body.innerHTML = '';
+}
+
+function minimizeTerm() {
+  if (viewMode) toggleTerminalFab();
+}
+
+function maximizeTerm() {
+  const t = document.getElementById('terminal-window');
+  t.classList.remove('minimized', 'hidden');
+  t.classList.add('fullscreen');
+  termVisible = true;
+  input.disabled = false;
+  if (viewMode) exitViewMode();
+  input.focus();
+}
+
+let termVisible = true;
+function toggleTerminalFab() {
+  const term = document.getElementById('terminal-window');
+  termVisible = !termVisible;
+  if (termVisible) {
+    input.disabled = false;
+    term.classList.remove('fullscreen', 'minimized');
+    term.classList.add('overlay');
+    void term.offsetWidth;
+    term.classList.remove('hidden');
+    setTimeout(() => {
+      body.scrollTop = body.scrollHeight;
+      // If terminal was cleared (closed with X), reboot it
+      if (body.innerHTML === '') {
+        currentPath = ['~'];
+        updatePrompt();
+        runBoot();
+      } else {
+        input.focus();
+      }
+    }, 50);
+  } else {
+    input.disabled = true;
+    input.value = '';
+    input.blur();
+    term.classList.add('hidden');
+  }
+}
+
+let mobileVisible = true;
+function toggleMobileTerm() {
+  toggleTerminalFab();
+}
+
+// ============================================================
+// INPUT HANDLING
+// ============================================================
+
+input.addEventListener('keydown', (e) => {
+  if (!termVisible || input.disabled) { e.preventDefault(); return; }
+  if (e.key === 'Enter') {
+    const val = input.value;
+    input.value = '';
+    handleCommand(val);
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    if (historyIdx < cmdHistory.length - 1) {
+      historyIdx++;
+      input.value = cmdHistory[historyIdx];
+      setTimeout(() => { input.selectionStart = input.selectionEnd = input.value.length; }, 0);
+    }
+  } else if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    if (historyIdx > 0) {
+      historyIdx--;
+      input.value = cmdHistory[historyIdx];
+    } else {
+      historyIdx = -1;
+      input.value = '';
+    }
+  } else if (e.key === 'Tab') {
+    e.preventDefault();
+    autocomplete();
+  } else if (e.key === 'l' && e.ctrlKey) {
+    e.preventDefault();
+    body.innerHTML = '';
+  } else if (e.key === 'c' && e.ctrlKey) {
+    e.preventDefault();
+    appendPromptLine(input.value + '^C');
+    input.value = '';
+    appendLine('');
+  }
+});
+
+function autocomplete() {
+  const val = input.value;
+  const parts = val.trim().split(/\s+/);
+  
+  if (parts.length === 1) {
+    // Complete command
+    const partial = parts[0];
+    const matches = COMMANDS.filter(c => c.startsWith(partial));
+    if (matches.length === 1) input.value = matches[0] + ' ';
+    else if (matches.length > 1) {
+      appendPromptLine(val);
+      appendLine(matches.join('  '), 'line-muted');
+    }
+  } else if (parts.length === 2) {
+    // Complete filename
+    const partial = parts[1];
+    const dir = getDirAtPath(currentPath);
+    if (!dir) return;
+    const matches = Object.keys(dir).filter(k => k.startsWith(partial));
+    if (matches.length === 1) {
+      input.value = parts[0] + ' ' + matches[0];
+    } else if (matches.length > 1) {
+      appendPromptLine(val);
+      appendLine(matches.join('  '), 'line-muted');
+    }
+  }
+}
+
+// Keep focus
+document.addEventListener('click', () => { if (termVisible) input.focus(); });
+document.addEventListener('keydown', (e) => {
+  // Backtick toggles terminal visibility in view mode
+  if (e.key === '`' && viewMode) {
+    e.preventDefault();
+    toggleTerminalFab();
+    return;
+  }
+  if (!termVisible) return;
+  if (e.target !== input && !e.ctrlKey && !e.metaKey && e.key.length === 1) {
+    input.focus();
+  }
+});
+
+// ============================================================
+// INIT
+// ============================================================
+
+runBoot();
+
+</script>
+</body>
+</html>
