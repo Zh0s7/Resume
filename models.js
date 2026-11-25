@@ -70,8 +70,8 @@ const projects = [
     description: 'An illustrative top view showing four independent wheel drives, four controllers, Teensy control signals, and power distribution. Dashed outlines identify pending work.',
     parts: [
       ['Four wheel drives', 'Four 6.5-inch hoverboard BLDC hub motors use four independent ZS-X11H controllers. Electronics function, while vehicle-level mechanical integration remains pending.'],
-      ['Teensy 4.0', 'I independently developed and tested firmware for speed, direction, and electronic braking. Lavender lines show control relationships with the four controllers.'],
-      ['36 V power', 'A 36 V lithium-ion power system supplies the motor controllers. Coral lines show power distribution schematically.'],
+      ['Teensy 4.0', 'I independently developed and tested firmware for speed, direction, and electronic braking. Light lines show control relationships with the four controllers.'],
+      ['36 V power', 'A 36 V lithium-ion power system supplies the motor controllers. Orange lines show power distribution schematically.'],
       ['Planned control', 'Steering sensing and mechanical integration are in development. Independent torque vectoring and a custom VCU PCB are planned, with vehicle-level validation still outstanding.'],
     ],
     scene: '<text class="diagram-small" text-anchor="middle" x="360" y="41">Top view · electrical architecture</text>\
@@ -102,6 +102,27 @@ const projects = [
   },
 ];
 
+const walkthroughs = {
+  'otis-dynamics': [
+    [0, 'Bring up the mobile base', 'My low-level firmware and BLDC controller integration establish the physical drivetrain before higher-level robotics control is added.'],
+    [1, 'Sense the environment', 'LiDAR and depth-camera inputs support the team’s perception and ROS 2 navigation research, with RViz used for visualization.'],
+    [2, 'Integrate manipulation', 'The arm and hand are team-developed subsystems. My work includes assisting with their development and electromechanical integration.'],
+    [3, 'Research tactile feedback', 'Magnetic sensing in soft grippers is an ongoing research workstream. Grasp-state estimation, slip detection, validation, and integration remain under investigation.'],
+  ],
+  fulfillai: [
+    [1, 'Allocate a task and reserve a route', 'The planning engine uses A* and space-time reservations to coordinate where robots move and when they occupy each position.'],
+    [0, 'Move inventory through the warehouse', 'Robots pick up inventory, transport it, and deliver it for order fulfillment. The moving robot illustrates this workflow.'],
+    [2, 'Persist the operation', 'FastAPI and PostgreSQL maintain authoritative robot, inventory, and order state. Redis Streams and a transactional outbox support event processing and recovery.'],
+    [3, 'Visualize the current state', 'The React, TypeScript, and Three.js dashboard presents robot movement, inventory, orders, and operational state.'],
+  ],
+  'go-kart': [
+    [2, 'Distribute electrical power', 'The 36 V lithium-ion system supplies four independent ZS-X11H controllers. Orange traces illustrate the power connections.'],
+    [1, 'Send motor commands', 'The Teensy 4.0 firmware sends speed, direction, and braking commands. Light traces illustrate these tested control relationships.'],
+    [0, 'Control four wheel drives', 'Four hub motors have independent controllers. The electronics function, while chassis assembly and vehicle-level mechanical integration remain pending.'],
+    [3, 'Develop the next control layer', 'Steering sensing and mechanical integration are active work. Torque vectoring, a custom VCU PCB, and vehicle-level validation are planned.'],
+  ],
+};
+
 const viewer = document.querySelector('.viewer');
 const model = viewer.querySelector('.model');
 const scene = model.querySelector('.diagram-scene');
@@ -109,28 +130,88 @@ const picker = [...viewer.querySelectorAll('[data-model]')];
 const parts = viewer.querySelector('.parts');
 const note = viewer.querySelector('.part-note');
 const caseLink = viewer.querySelector('.case-link');
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+const walkthroughControls = document.createElement('div');
+walkthroughControls.className = 'walkthrough-controls';
+walkthroughControls.innerHTML = '<button type="button" class="walkthrough-toggle" aria-pressed="false">Play walkthrough</button><button type="button" class="walkthrough-previous" hidden>Previous</button><span class="walkthrough-progress" hidden></span><button type="button" class="walkthrough-next" hidden>Next</button><button type="button" class="walkthrough-exit" hidden>Exit walkthrough</button>';
+viewer.querySelector('.model-layout').before(walkthroughControls);
+const stepTitle = document.createElement('p');
+stepTitle.className = 'walkthrough-step';
+stepTitle.hidden = true;
+note.before(stepTitle);
+const playButton = walkthroughControls.querySelector('.walkthrough-toggle');
+const previousButton = walkthroughControls.querySelector('.walkthrough-previous');
+const nextButton = walkthroughControls.querySelector('.walkthrough-next');
+const exitButton = walkthroughControls.querySelector('.walkthrough-exit');
+const progress = walkthroughControls.querySelector('.walkthrough-progress');
 let project;
+let selectedPart = 0;
+let walkthroughStep = -1;
+let walkthroughTimer = null;
+
+function updateWalkthroughControls() {
+  const playing = walkthroughTimer !== null;
+  const active = walkthroughStep >= 0;
+  viewer.classList.toggle('is-playing', playing);
+  playButton.setAttribute('aria-pressed', String(playing));
+  playButton.textContent = playing ? 'Pause walkthrough' : active ? 'Continue walkthrough' : 'Play walkthrough';
+  for (const element of [previousButton, nextButton, exitButton, progress, stepTitle]) element.hidden = !active;
+  note.setAttribute('aria-live', playing ? 'off' : 'polite');
+  if (active) progress.textContent = (walkthroughStep + 1) + ' / ' + walkthroughs[project.anchor].length;
+}
+
+function pauseWalkthrough() {
+  clearInterval(walkthroughTimer);
+  walkthroughTimer = null;
+  updateWalkthroughControls();
+}
+
+function resetWalkthrough() {
+  clearInterval(walkthroughTimer);
+  walkthroughTimer = null;
+  walkthroughStep = -1;
+  updateWalkthroughControls();
+}
+
+function showWalkthroughStep() {
+  const [index, title, description] = walkthroughs[project.anchor][walkthroughStep];
+  selectPart(index);
+  stepTitle.textContent = title;
+  note.textContent = description;
+  updateWalkthroughControls();
+}
 
 function selectPart(index) {
+  selectedPart = index;
   [...parts.children].forEach((button, i) => button.setAttribute('aria-pressed', String(i === index)));
   scene.querySelectorAll('[data-part]').forEach(group => group.setAttribute('aria-pressed', String(Number(group.dataset.part) === index)));
   note.textContent = project.parts[index][1];
+  if (!reducedMotion.matches) {
+    note.getAnimations().forEach(animation => animation.cancel());
+    note.animate([{ opacity: 0, transform: 'translateY(5px)' }, { opacity: 1, transform: 'translateY(0)' }], { duration: 220, easing: 'ease-out' });
+  }
 }
 
 function selectProject(index) {
+  resetWalkthrough();
   project = projects[index];
+  viewer.dataset.project = project.anchor;
   picker.forEach((button, i) => button.setAttribute('aria-pressed', String(i === index)));
   viewer.querySelector('.model-heading').textContent = project.title;
   viewer.querySelector('.model-category').textContent = project.category;
   model.querySelector('title').textContent = project.title + ' system overview';
   model.querySelector('desc').textContent = project.description;
   scene.innerHTML = project.scene;
-  caseLink.href = 'projects/' + project.anchor + '.html';
+  caseLink.href = viewer.dataset.initialProject ? '#section-0' : 'projects/' + project.anchor + '.html';
+  caseLink.textContent = viewer.dataset.initialProject ? 'Read project details' : 'Read the case study';
   parts.replaceChildren(...project.parts.map(([name], i) => {
     const button = document.createElement('button');
     button.type = 'button';
     button.textContent = name;
-    button.addEventListener('click', () => selectPart(i));
+    button.addEventListener('click', () => {
+      resetWalkthrough();
+      selectPart(i);
+    });
     return button;
   }));
   scene.querySelectorAll('[data-part]').forEach(group => {
@@ -138,17 +219,63 @@ function selectProject(index) {
     group.setAttribute('role', 'button');
     group.setAttribute('tabindex', '0');
     group.setAttribute('aria-label', project.parts[index][0]);
-    group.addEventListener('click', () => selectPart(index));
+    group.addEventListener('click', () => {
+      resetWalkthrough();
+      selectPart(index);
+    });
     group.addEventListener('keydown', event => {
       if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
+        resetWalkthrough();
         selectPart(index);
       }
     });
   });
+  scene.querySelector('.warehouse-robot')?.classList.add('robot-travel');
   selectPart(0);
+  if (!reducedMotion.matches) {
+    scene.getAnimations().forEach(animation => animation.cancel());
+    scene.animate([{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'translateY(0)' }], { duration: 320, easing: 'cubic-bezier(.2,.7,.2,1)' });
+  }
 }
 
+playButton.addEventListener('click', () => {
+  if (walkthroughTimer !== null) {
+    pauseWalkthrough();
+    return;
+  }
+  if (walkthroughStep < 0) walkthroughStep = 0;
+  walkthroughTimer = window.setInterval(() => {
+    walkthroughStep = (walkthroughStep + 1) % walkthroughs[project.anchor].length;
+    showWalkthroughStep();
+  }, 5000);
+  showWalkthroughStep();
+});
+previousButton.addEventListener('click', () => {
+  pauseWalkthrough();
+  walkthroughStep = (walkthroughStep + walkthroughs[project.anchor].length - 1) % walkthroughs[project.anchor].length;
+  showWalkthroughStep();
+});
+nextButton.addEventListener('click', () => {
+  pauseWalkthrough();
+  walkthroughStep = (walkthroughStep + 1) % walkthroughs[project.anchor].length;
+  showWalkthroughStep();
+});
+exitButton.addEventListener('click', () => {
+  resetWalkthrough();
+  selectPart(selectedPart);
+  playButton.focus();
+});
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) pauseWalkthrough();
+});
+reducedMotion.addEventListener('change', () => {
+  if (reducedMotion.matches) {
+    pauseWalkthrough();
+    for (const element of [scene, note]) element.getAnimations().forEach(animation => animation.cancel());
+  }
+});
 picker.forEach((button, index) => button.addEventListener('click', () => selectProject(index)));
 viewer.hidden = false;
-selectProject(0);
+const initialProject = projects.findIndex(item => item.anchor === viewer.dataset.initialProject);
+selectProject(Math.max(0, initialProject));
